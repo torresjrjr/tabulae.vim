@@ -1,4 +1,4 @@
 # tabulae.vim
 📖 A Vim spreadsheet calculator plugin.
 
-Works with tab-separated-value (`.tsv`) files.
+Written by [torresjrjr](https://t.me/torresjrjr).
