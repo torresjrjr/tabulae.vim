@@ -38,8 +38,9 @@ Editing the spreadsheet may happen in one or any of multiple ways:
 
 1.  User hovers to a cell, and presses a command sequence (a single key) that
     switches them to the buffer of their `.tae` file, either in a new window or
-    the same window.Users edit the `.tae` file directly, and the plugin will
-    automatically update the preview buffer.
+    the same window. User edits the `.tae` file directly, and the plugin will
+    automatically update the preview buffer. Once the data is entered, the
+    preview buffer will be resumed (if it was gone).
 
 2.  User hovers to a cell, and presses a command sequence (a single key) that
     switches them to a new, small window (`:botright 1new`), or a prompt. They
@@ -47,26 +48,26 @@ Editing the spreadsheet may happen in one or any of multiple ways:
     metadata), or just the data (in which that case, the data type is inferred).
 
 For now, The preview will be tab-delimited, but in the future, tabulae.vim may
-have the ability to grid cells with variable whitespace, so as to be able to
-have rows and coloums of varying widths and heights. I think that a combination
-of _hidden_ <TAB> characters (by way of Vim highlighting) and spaces (0x20)
-would be effective.
+have the ability to draw preview spreadsheets with variable whitespace, so as to
+be able to have rows and coloums of varying widths and heights. I think that a
+combination of _hidden_ \<TAB\> characters (by way of Vim highlighting) and spaces
+(0x20) would be effective.
 
 The `.tae` file format
 ----------------------
 `.tae` files are similar to `.tsv` files in that they contain rows and columns
 of cells. All cells, including cells last in a row, are marked by a subsequent
-<TAB> character (0x09).
+\<TAB\> character (0x09).
 
 Cells contain an initial metadata string, a whitespace separator, and data, in
 that order. For example, this cell has metadata `'`, a single space ` `, and
-data `Some data`, followed by a <TAB> character:
+data `Some data`, followed by a \<TAB\> character:
 
 ```
 ' Some data<TAB>
 ```
 
-Data cannot contain <TAB> characters. These are marked with `\t`.
+Data cannot contain \<TAB\> characters. These are marked with `\t`.
 
 Data cannot contain preceding or anticeding naked whitespace. Such whitespace
 must be escaped with a backslash, like `\ `, or with `\s`. Only the very first
