@@ -1,0 +1,27 @@
+# example.tbl
+# This is an example `.tbl` file.
+# Comments are written with an initial `#` character.
+# Blank lines are ignored.
+
+1 A < Item
+1 B < Price
+1 C < Count
+1 D < Cost
+
+2 A < CAVENDISH BANANAS
+2 B = 0.39
+2 C = 5
+2 D = prod(2B:2C)
+
+3 A < FROZEN PEAS
+3 B = 3.49
+3 C = 1
+3 D = prod(3B:3C)
+
+4 A < BARRYS BAKED BEANS
+4 B = 1.99
+4 C = 1
+4 D = prod(4B:4C)
+
+5 C = sum(2C:4C)
+5 D = sum(2D:4D)
