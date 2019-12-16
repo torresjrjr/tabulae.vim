@@ -4,9 +4,11 @@ An explanation of how tabulae.vim will work.
 
 Basic model
 -----------
-tabulae.vim will work with an internally defined, tab-delimited files with the
-extension `.tae`. Normal `.tsv` and `.csv` files will be able to be converted to
-`.tae` files. Here's an excerpt from example.tae:
+tabulae.vim works with an internally defined, tab-delimited file format with the
+extension `.tae`. Cells have metadata about data types, formatting, outline
+type, etc. Normal `.tsv` and `.csv` files can be converted to `.tae` files, and
+metadata will be inplicitliy or explicitely created. Here's an excerpt from
+example.tae:
 
 > Note: If you're viewing this in Vim, `:set tabstop=24` to view clearly.
 
@@ -19,7 +21,7 @@ extension `.tae`. Normal `.tsv` and `.csv` files will be able to be converted to
 ```
 
 tabulae.vim will take a `.tae` file and create a preview buffer, where all the
-cells are evaluated:
+cells are evaluated.
 
 ```tae.view
 Item	Price	Count	Cost	
@@ -32,6 +34,24 @@ BARRYS BAKED BEANS	1.99	1	1.99
 This preview buffer will be navigable with `hjlk` and hovered cells will be
 highlighted. Edits to the `.tae` file will update the preview buffer.
 
+Editing the spreadsheet may happen in one or any of multiple ways:
+
+1.  User hovers to a cell, and presses a command sequence (a single key) that
+    switches them to the buffer of their `.tae` file, either in a new window or
+    the same window.Users edit the `.tae` file directly, and the plugin will
+    automatically update the preview buffer.
+
+2.  User hovers to a cell, and presses a command sequence (a single key) that
+    switches them to a new, small window (`:botright 1new`), or a prompt. They
+    are required to enter/edit either the contents of the whole cell (including
+    metadata), or just the data (in which that case, the data type is inferred).
+
+For now, The preview will be tab-delimited, but in the future, tabulae.vim may
+have the ability to grid cells with variable whitespace, so as to be able to
+have rows and coloums of varying widths and heights. I think that a combination
+of _hidden_ <TAB> characters (by way of Vim highlighting) and spaces (0x20)
+would be effective.
+
 The `.tae` file format
 ----------------------
 `.tae` files are similar to `.tsv` files in that they contain rows and columns
@@ -39,7 +59,12 @@ of cells. All cells, including cells last in a row, are marked by a subsequent
 <TAB> character (0x09).
 
 Cells contain an initial metadata string, a whitespace separator, and data, in
-that order. For example: `' Some data<TAB>`.
+that order. For example, this cell has metadata `'`, a single space ` `, and
+data `Some data`, followed by a <TAB> character:
+
+```
+' Some data<TAB>
+```
 
 Data cannot contain <TAB> characters. These are marked with `\t`.
 
@@ -47,9 +72,9 @@ Data cannot contain preceding or anticeding naked whitespace. Such whitespace
 must be escaped with a backslash, like `\ `, or with `\s`. Only the very first
 and very last whitespace character needs to be escaped - the remaining
 whitespace within those two  will be considered data. For example:
+
 ```tae
 '    \  Data with 2 preceding and 2 anteceding spaces \     <TAB>
 '    \s Data with 2 preceding and 2 anteceding spaces \s    <TAB>
 ```
-{&}
 
