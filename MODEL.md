@@ -72,13 +72,16 @@ Data types
 `.tae` files observe certain data types, which allows for diverse data
 manipulation.
 
+Data is always a unicode text sequence of bytes. Datatypes are only
+interpretations of what the data represents.
+
 > Note: This section is still being considered.
 
 The basic data types are:
 - String (Unicode sequence).
 - Number
-	- Integer
-	- Float
+	- Integer (ASCII numerals)
+	- Float (ASCII numerals, period)
 - Boolean
 - Datetime (ISO 8601).
 

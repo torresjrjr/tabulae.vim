@@ -20,40 +20,92 @@ set cpo&vim
 setlocal tabstop=24 softtabstop=0
 
 " VARIABLES
-let s:tcur = {'x':1, 'y':1} " .tae buffer cursor data.
-let s:vcur = {'x':1, 'y':1} " .tae.view buffer cursor data.
 
 " FUNCTIONS
 
 function! _InitView()
 	set bufhidden=hide
+	let b:tcur = {'x':1, 'y':1} " .tae buffer cursor data.
 	let taebuf = bufname("%")
 	let viewbuf = taebuf.".view"
+	
 	execute "badd ".viewbuf
 	%yank t
-	execute "args ".viewbuf
-	argdo set bufhidden=hide | normal "tP
-	execute "hide buffer ".taebuf
+	
+	execute "buffer ".viewbuf
+	" Paste taebuf content into viewbuf.
+	put! t
+	" Delete extra line and move cursor to first tab.
+	normal Gddgg0f	
+	let b:vcur = {'x':1, 'y':1} " .tae.view buffer cursor data.
+	set bufhidden=hide | setlocal tabstop=24 softtabstop=0 
+	set showbreak=`
+	set list listchars=eol:¬,tab:>\ \|,nbsp:%
+	set cursorline cursorcolumn
 endfunction
 
 function! _EvalView() 
-"	let viewbuf_data = {
-"		'rows':get_rows(),
-"		'cols':get_cols()
-"	}
-
-	" HARDCODED
-	let viewbuf_data = {
-		'rows':5,
-		'cols':4
-	}
-
-	for cellpos in itercellpos(rows, cols)
-		let cell = _GetCell(cellpos)
-		let celldata = _EvalCell(cell)
-		call _SetCell(cellpos, cell)
+	let b:viewbuf_data = {
+\		'rows':line('$'),
+\		'cols':len(substitute(getline(1), '[^\t]', '', 'g'))
+\	}
+	echomsg b:viewbuf_data
+	
+	" Iterate over all cell positions (See _itercellpos() ).
+	for pos in _itercellpos(b:viewbuf_data['rows'], b:viewbuf_data['cols'])
+		" pos := [int, int]
+		let cell = _GetCell(pos)
+		let evalcell = _EvalCell(pos, cell)
+		call _SetCell(cell, evalcell)
 	endfor
 endfunction
+
+" --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
+
+function _GetCell(pos) 
+	" Returns String of whole cell including all characters and <TAB>
+	let line = getline(a:pos[0])
+	let row  = split(line, '\t\zs')
+	let cell = row[a:pos[1] - 1]
+	return cell
+endfunction
+
+function _EvalCell(pos, cell)
+	let datatype = _GetDatatype(a:cell)
+	if datatype == 'String'
+		return 'String'.a:cell
+	elseif datatype == 'Number'
+		return 'Number'.a:cell
+	endif
+	return "DEFAULT_EVAL"
+endfunction
+
+function _SetCell(cell, newcell) 
+	execute "%s/".a:cell."/".a:newcell."/g"
+endfunction
+
+" --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
+
+function _GetDatatype(cell)
+	if a:cell == "\t"
+		return 'Empty'
+	endif
+	let meta = split(a:cell)[0]
+	if stridx(meta, "'") != -1
+		let datetype = 'String'
+	elseif stridx(meta, "#") != -1
+		let datetype = 'Number'
+	endif
+	return datetype
+endfunction
+
+function _Evaluate_numeric_cell()
+	let cell = getline(curpos()[2])
+	let cellcontents = split(cell)[3]
+	echo cellcontents
+endfunction
+
+command EvaluateNumericCell :call _Evaluate_numeric_cell()
 
 " --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
 
@@ -72,25 +124,6 @@ function _itercellpos(nrows, ncols)
 endfunction
 
 " --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
-
-function _GetCell(cellpos) 
-	return "DEFAULT_DATA"
-endfunction
-
-function _EvalCell(cell)
-	let datatype = _GetDatatype(cell)
-	return "DEFAULT_EVAL"
-endfunction
-
-function _Evaluate_numeric_cell()
-	let cell = getline(curpos()[2])
-	let cellcontents = split(cell)[3]
-	echo cellcontents
-endfunction
-
-
-command EvaluateNumericCell :call _Evaluate_numeric_cell()
-
 
 let &cpo = s:save_cpo
 unlet s:save_cpo
