@@ -16,24 +16,36 @@ set cpo&vim
 " ### NOTE ###
 " This version is a very early draft. This will change soon.
 
-" VARIABLES
+" OPTIONS
+setlocal tabstop=24 softtabstop=0
 
+" VARIABLES
+let s:tcur = {'x':1, 'y':1} " .tae buffer cursor data.
+let s:vcur = {'x':1, 'y':1} " .tae.view buffer cursor data.
 
 " FUNCTIONS
 
-function! _Make_clean_tae()
-	let filepath = bufname()
-	let viewfilepath = bufname().'.clean'
-	execute('new '.viewfilepath)
-	execute('read '.filepath)
-
-	:%s/^#.*//
-	:g/^$/d
-	sort
-
-	write
+function! _InitView()
+	let taebuf = bufname("%")
+	let viewbuf = taebuf.".view"
+	execute "badd ".viewbuf
+	%yank t
+	execute "args ".viewbuf
+	argdo set bufhidden=hide | normal "tP
+	execute "hide buffer ".taebuf
 endfunction
 
+function! _EvalView()
+	let viewbuf_data = {
+		'rows':get_rows(),
+		'cols':get_cols()
+	}
+	for cellpos in itercellpos(rows, cols)
+		call EvalCell(cellpos)
+	endfor
+endfunction
+
+" --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
 
 function! _Make_eval_tae()
 	let filepath = bufname()
