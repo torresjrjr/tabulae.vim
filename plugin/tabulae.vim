@@ -26,6 +26,7 @@ let s:vcur = {'x':1, 'y':1} " .tae.view buffer cursor data.
 " FUNCTIONS
 
 function! _InitView()
+	set bufhidden=hide
 	let taebuf = bufname("%")
 	let viewbuf = taebuf.".view"
 	execute "badd ".viewbuf
@@ -35,39 +36,50 @@ function! _InitView()
 	execute "hide buffer ".taebuf
 endfunction
 
-function! _EvalView()
+function! _EvalView() 
+"	let viewbuf_data = {
+"		'rows':get_rows(),
+"		'cols':get_cols()
+"	}
+
+	" HARDCODED
 	let viewbuf_data = {
-		'rows':get_rows(),
-		'cols':get_cols()
+		'rows':5,
+		'cols':4
 	}
+
 	for cellpos in itercellpos(rows, cols)
-		call EvalCell(cellpos)
+		let cell = _GetCell(cellpos)
+		let celldata = _EvalCell(cell)
+		call _SetCell(cellpos, cell)
 	endfor
 endfunction
 
 " --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
 
-function! _Make_eval_tae()
-	let filepath = bufname()
-	let viewfilepath = bufname().'.eval'
-	execute('new '.viewfilepath)
-	execute('read '.filepath)
-
-	:g/. . = .*/_EvaluateNumericCell
-
-	write
+function _itercellpos(nrows, ncols)
+	" Returns a list of coordinates of a spreadsheet of size nrows and ncols.
+	" (3,2) -> [  [1,1],[1,2],
+	"             [2,1],[2,2],
+	"             [3,1],[3,2]  ]
+	let cellposlist = []
+	for nrow in range(1, a:nrows)
+		for ncol in range(1, a:ncols)
+			let cellposlist += [[nrow, ncol]]
+		endfor
+	endfor
+	return cellposlist
 endfunction
 
+" --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
 
-function! _Make_view()
-	let filepath = bufname()
-	let viewfilepath = bufname().'.view'
-	execute('new '.viewfilepath)
-	execute('read '.filepath)
+function _GetCell(cellpos) 
+	return "DEFAULT_DATA"
+endfunction
 
-	:%s/^#.*//
-	:g/^$/d
-	sort
+function _EvalCell(cell)
+	let datatype = _GetDatatype(cell)
+	return "DEFAULT_EVAL"
 endfunction
 
 function _Evaluate_numeric_cell()
