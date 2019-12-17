@@ -1,12 +1,20 @@
 " tabulae.vim
+" A Vim spreadsheet calculator plugin.
+" Version:      0.0.0
+" Last Changed: 2019 Dec 17
 " Author:       Byron Torres <http://t.me/torresjrjr/>
-" Version:      1.0.0
+" License:      This file is placed in the public domain.
 
 if exists("g:loaded_tabulae") || &cp || v:version < 700
   finish
 endif
-let g:loaded_tabulae = 1
+let g:loaded_tabulae = 1 
+let s:save_cpo = &cpo
+set cpo&vim
 
+
+" ### NOTE ###
+" This version is a very early draft. This will change soon.
 
 " VARIABLES
 
@@ -58,3 +66,7 @@ endfunction
 
 
 command EvaluateNumericCell :call _Evaluate_numeric_cell()
+
+
+let &cpo = s:save_cpo
+unlet s:save_cpo

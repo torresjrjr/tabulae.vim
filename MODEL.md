@@ -61,21 +61,60 @@ of cells. All cells, including cells last in a row, are marked by a subsequent
 
 Cells contain an initial metadata string, a whitespace separator, and data, in
 that order. For example, this cell has metadata `'`, a single space ` `, and
-data `Some data`, followed by a \<TAB\> character:
+string data `Some data`, followed by a \<TAB\> character:
 
 ```
 ' Some data<TAB>
 ```
 
-Data cannot contain \<TAB\> characters. These are marked with `\t`.
+Data types
+----------
+`.tae` files observe certain data types, which allows for diverse data
+manipulation.
 
-Data cannot contain preceding or anticeding naked whitespace. Such whitespace
+> Note: This section is still being considered.
+
+The basic data types are:
+- String (Unicode sequence).
+- Number
+	- Integer
+	- Float
+- Boolean
+- Datetime (ISO 8601).
+
+### String 
+A string data type is a unicode sequence of characters.
+A string is denoted in metadata by the `'` character (0x27).
+
+Strings cannot contain \<TAB\> characters. These are escaped with `\t`.
+
+Strings cannot contain preceding or anticeding naked whitespace. Such whitespace
 must be escaped with a backslash, like `\ `, or with `\s`. Only the very first
 and very last whitespace character needs to be escaped - the remaining
 whitespace within those two  will be considered data. For example:
 
 ```tae
-'    \  Data with 2 preceding and 2 anteceding spaces \     <TAB>
-'    \s Data with 2 preceding and 2 anteceding spaces \s    <TAB>
+'    \  Strings with 2 preceding and 2 anteceding spaces \     <TAB>
+'    \s Strings with 2 preceding and 2 anteceding spaces \s    <TAB>
 ```
+
+### Number
+> In progress
+
+### Boolean
+> In progress
+
+### Datetime
+> In progress
+
+Equations
+---------
+Cells in a `.tae` file can contains equations which are evaluated at the
+preview.
+
+Equations are marks in metadata by the `=` character (0x3D).
+```tae
+#= sum(2D:4D)
+```
+{##}
 
