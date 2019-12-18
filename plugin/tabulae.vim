@@ -49,56 +49,90 @@ function! _EvalView()
 \		'rows':line('$'),
 \		'cols':len(substitute(getline(1), '[^\t]', '', 'g'))
 \	}
-	echomsg b:viewbuf_data
+	" echomsg "DEBUG: b:viewbuf_data = ".b:viewbuf_data
 	
 	" Iterate over all cell positions (See _itercellpos() ).
 	for pos in _itercellpos(b:viewbuf_data['rows'], b:viewbuf_data['cols'])
 		" pos := [int, int]
-		let cell = _GetCell(pos)
-		let evalcell = _EvalCell(pos, cell)
-		call _SetCell(cell, evalcell)
+		let evalstatus =  _EvalCell(pos)
 	endfor
 endfunction
 
 " --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
 
 function _GetCell(pos) 
-	" Returns String of whole cell including all characters and <TAB>
+	""" Returns String of whole cell including all characters and <TAB>
 	let line = getline(a:pos[0])
-	let row  = split(line, '\t\zs')
+	let row  = split(line, '\t\zs', 1)
 	let cell = row[a:pos[1] - 1]
 	return cell
 endfunction
 
-function _EvalCell(pos, cell)
-	let datatype = _GetDatatype(a:cell)
-	if datatype == 'String'
-		return 'String'.a:cell
-	elseif datatype == 'Number'
-		return 'Number'.a:cell
+function _EvalCell(pos)
+	""" Gets, evaluates, and sets a cell at position `pos`.
+	""" Recursively evaluates if cell is equation with references.
+	" echomsg "DEBUG: pos = ".join(a:pos, ', ')
+	
+	let cell = _GetCell(a:pos)
+	" echomsg "DEBUG: cell = ".cell
+	
+	" CASE: Cell is empty.
+	if cell == "\t"
+		return "Empty"
+
+	" CASE: Cell is already evaluated.
+	elseif cell[0] == '`'
+		return "Already Evaluated"
+	
+	" CASE: Unplanned occurence of preceding whitespace?
+	elseif cell[0] == ' '
+		return "Error: Unexpected preceding whitespace."
 	endif
-	return "DEFAULT_EVAL"
+	
+	let [metadata, data] = _SplitCell(cell)
+	
+	let datatype = _GetDatatype(metadata)
+	" echomsg "DEBUG: datatype = ".datatype
+	
+	" Creating evaluated string.
+	if datatype == 'String'
+		let eval = '`S: '.data.'	'
+	elseif datatype == 'Number'
+		let eval = '`N: '.data.'	'
+	endif
+	
+	let status = "Evaluated"
+	let setstatus = _SetCell(a:pos, cell, eval)
+	return status
 endfunction
 
-function _SetCell(cell, newcell) 
-	execute "%s/".a:cell."/".a:newcell."/g"
+function _SetCell(pos, cell, eval) 
+	execute "%s/".a:cell."/".a:eval."/g"
+	return "Cell Set"
 endfunction
 
 " --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
 
-function _GetDatatype(cell)
-	if a:cell == "\t"
-		return 'Empty'
-	endif
-	let meta = split(a:cell)[0]
-	if stridx(meta, "'") != -1
-		let datetype = 'String'
-	elseif stridx(meta, "#") != -1
-		let datetype = 'Number'
-	endif
-	return datetype
+function _SplitCell(cell)
+	let metadata = split(a:cell)[0]
+	
+	let data = a:cell[len(metadata):]
+	let data = trim(data)
+	let data = substitute(data, '\\|', '', 'g')
+	
+	return [metadata, data]
 endfunction
 
+function _GetDatatype(meta)
+	if     stridx(a:meta, "'") == 0
+		return 'String'
+	elseif stridx(a:meta, "#") == 0
+		return 'Number'
+	else
+		return 'Undefined'
+endfunction
+
+" REDUNDANT
 function _Evaluate_numeric_cell()
 	let cell = getline(curpos()[2])
 	let cellcontents = split(cell)[3]
