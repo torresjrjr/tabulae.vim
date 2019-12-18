@@ -4,6 +4,8 @@ tabulae.vim
 
 Written by [torresjrjr](https://t.me/torresjrjr).
 
+![tabulae.vim first rudimentary view buffer.](https://i.imgur.com/xKUxkio.png)
+
 This is an ongoing project over Christmas 2019. tabulae.vim aims to be a Vim plugin
 which opens spreadsheet-like, tab-delimited `.tae` files and allows spreadsheet
 previews with live calculations. Essentially, this plugin will turn Vim into an
@@ -40,7 +42,7 @@ Progress
   - Make plugin work around `.tae` filetype buffers.
   - Consider how 'workbooks' would work (a spreadsheet on each tab, with methods
     to link data and navigate between one other, like `gf`). How would buffer
-    and tab management work?
+    and tab management work? How would a workbook file structure work?
 
 Contribute
 ----------
