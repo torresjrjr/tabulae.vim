@@ -1,7 +1,7 @@
 " tabulae.vim
 " A Vim spreadsheet calculator plugin.
 " Version:      0.0.0
-" Last Changed: 2019 Dec 17
+" Last Changed: 2019 Dec 18
 " Author:       Byron Torres <http://t.me/torresjrjr/>
 " License:      This file is placed in the public domain.
 

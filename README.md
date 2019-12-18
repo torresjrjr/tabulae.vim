@@ -19,9 +19,10 @@ tab-delimited files with special syntax, and are worked as spreadsheets.
 Progress
 --------
 - 2019 Dec 18:  
-  Milestone ⛰️ ! A rudimentary 'view' buffer now works, with the `_EvalView()`
+  Milestone ⛰️ ! A rudimentary "view" buffer now works, with the `_EvalView()`
   function. The `_EvalCell()` function is capable of basic data handling.
-  ```
+  ```vim
+  " ./examples/spreadsheet.tae
   :source plugin/tabulae.vim | call _InitView() | call _EvalView() 
   ```
   Todo:
@@ -37,6 +38,9 @@ Progress
     evaluations (consider the viewport, or a history of dependant cells or
     evaluated cells).
   - Make plugin work around `.tae` filetype buffers.
+  - Consider how 'workbooks' would work (a spreadsheet on each tab, with methods
+    to link data and navigate between one other, like `gf`). How would buffer
+    and tab management work?
 
 Contribute
 ----------
