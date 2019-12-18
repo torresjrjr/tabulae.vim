@@ -20,7 +20,7 @@ tab-delimited files with special syntax, and are worked as spreadsheets.
 
 Progress
 --------
-- 2019 Dec 18:  
+- 2019 Dec 18:
   Milestone ⛰️ ! A rudimentary "view" buffer now works, with the `_EvalView()`
   function. The `_EvalCell()` function is capable of basic data handling.
   ```vim
@@ -45,7 +45,7 @@ Progress
     and tab management work? How would a workbook file structure work?
   - Consider conditional or inherited formatting based on the metadata of a
     cell's column's header cell. This could save space by only writting metadata
-    once per each column
+    once per each column.
 
 Contribute
 ----------

@@ -80,6 +80,12 @@ string data `Some data`, followed by a TAB character:
 ' Some data^I   
 ```
 
+Cells cannot contain literal TAB characters within them. Tabs are to be
+represented as `\t`.
+
+Cells cannot contain literal BACKSLASH characters `\\` (0x5C) within them. Backslashes
+are to be represented as `\\\\`
+
 Data types
 ----------
 `.tae` files observe certain data types, which allows for diverse data
@@ -98,6 +104,7 @@ The basic data types are:
 
 ### String 
 A string data type is a unicode sequence of characters.
+
 A string is denoted in metadata by the `'` character (0x27).
 
 ```tae
@@ -120,37 +127,43 @@ between the metadata and the first pipe sequence.
 ```
 
 ### Number
-> In progress
+> In progress.
+
 A Number data type is a sequence of:
-- ASCII numerals [0-9]
-- A decimal point [.]
-- Digit grouping characters [,\_] (thousand separators).
+
+- ASCII numerals `[0-9]`
+- An optional single decimal point `.`
+
 A Number is denoted in metadata by the '#' character (0x23).
 
 ```tae
-#   #   #   #   #   #   #   #   #   #   #   #   #   #   #   #   
-# 123^I             # 3.14^I            # 0.864^I           
-# 1,000,000.00^I    # 1_234_567^I
+# 123             # 3.14            # 0.618           # 123456789.00
 ```
 
 ### Boolean
-> In progress
+> In progress.
+
 A Boolean data type is a single character of either a `1` (0x31) or `0` (0x30).
+
 A Boolean is denoted in metadata by the `?` character (0x3F).
 
 ```
-? 0^I  ? 1^I
+? 1     ? 0
 ```
 
+> Other potential representations may be recognised in a later revision, and
+> include: `true`, `false`; `True`, `False`; `T`, `F`; `Yes`, `No`; `Y`, `N`;
+
 ### Datetime
-> In progress
-A Datetime data type is a sequence of characters in the ISO 8601 format of a
-datatime.
+> In progress.
+
+A Datetime data type is a sequence of characters in the ISO 8601 format.
+
 A Datetime is denoted in metadata by the `D` character (0x44).
 
 ```
-D 1999-12-25^I                  D 1999-12-25T12:30:45^I
-D 1999-12-25T12:30:45+00:00^I   D 1999-12-25T12:30:45Z^I
+D 1999-12-25                  D 1999-12-25T12:30:45
+D 1999-12-25T12:30:45+00:00   D 1999-12-25T12:30:45Z
 ```
 
 Equations
@@ -164,5 +177,45 @@ Equations are marks in metadata by the `=` character (0x3D).
 ?= Or(A1:E1)
 '= Cat(F1:F10)
 ```
-{##}
+
+Metadata
+--------
+
+> In progress.
+
+Metadata is the first part of a cell which encodes information about the cell.
+It is always from the first character of a cell upto and excluding the first
+whitespace character.
+
+- `!` 
+- `"` 
+- `#` - Denotes a Number type.
+- `$` 
+- `%` - Format number as percentage.
+- `'` 
+- `(` 
+- `)` 
+- `*` 
+- `+` 
+- `,` 
+- `-` 
+- `.` 
+- `/` 
+
+- `:` 
+- `;` 
+- `<` - Left flush formatting.
+- `=` - Denotes an equation.
+- `>` - Right flush formatting.
+- `?` - Denotes a Boolean type.
+- `@` 
+- `[` 
+- `]` 
+- `^` 
+- `_` 
+- `\`` Denotes an evaluated cell.
+- `{` 
+- `|` 
+- `}` 
+- `~` 
 
