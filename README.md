@@ -16,6 +16,28 @@ See [MODEL.md](MODEL.md) for more comprehensive detail.
 tabulae.vim will work with internally defined `.tae` files, which are
 tab-delimited files with special syntax, and are worked as spreadsheets.
 
+Progress
+--------
+- 2019 Dec 18:  
+  Milestone ⛰️ ! A rudimentary 'view' buffer now works, with the `_EvalView()`
+  function. The `_EvalCell()` function is capable of basic data handling.
+  ```
+  :source plugin/tabulae.vim | call _InitView() | call _EvalView() 
+  ```
+  Todo:
+  - Discover concealing characters for metadata markers in the viewbuffer.
+  - Make `_EvalCell()` capable of evaluating equations/formulae.
+  - Make a true `_SetCell()` function (unlikely needed, since side effects of
+    setting multiple cells is desirable).
+  - Improve in data type distinction, and standardise metadata sequences (likely
+    will be similar to ANSI escape sequences).
+  - Decide how to define a cell with leading whitespace.
+  - Decide on local/buffer settings, like 'listchars', 'buftype', etc.
+  - Consider efficiency improvements regarding `_itercellpos()` and minimising
+    evaluations (consider the viewport, or a history of dependant cells or
+    evaluated cells).
+  - Make plugin work around `.tae` filetype buffers.
+
 Contribute
 ----------
 If you like the idea and want to contribute to this project, contact me at

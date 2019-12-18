@@ -20,6 +20,7 @@ set cpo&vim
 setlocal tabstop=24 softtabstop=0
 
 " VARIABLES
+let g:tabulae_evaluated_marker = '`'
 
 " FUNCTIONS
 
@@ -61,7 +62,8 @@ endfunction
 " --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
 
 function _GetCell(pos) 
-	""" Returns String of whole cell including all characters and <TAB>
+	""" Returns String of whole cell including all characters and <TAB> (^I)
+	""" Example: cell = "#= 123.45^I"
 	let line = getline(a:pos[0])
 	let row  = split(line, '\t\zs', 1)
 	let cell = row[a:pos[1] - 1]
@@ -70,7 +72,7 @@ endfunction
 
 function _EvalCell(pos)
 	""" Gets, evaluates, and sets a cell at position `pos`.
-	""" Recursively evaluates if cell is equation with references.
+	""" Recursively evaluates if cell is equation with references (TBC).
 	" echomsg "DEBUG: pos = ".join(a:pos, ', ')
 	
 	let cell = _GetCell(a:pos)
@@ -81,7 +83,7 @@ function _EvalCell(pos)
 		return "Empty"
 
 	" CASE: Cell is already evaluated.
-	elseif cell[0] == '`'
+	elseif cell[0] == g:tabulae_evaluated_marker
 		return "Already Evaluated"
 	
 	" CASE: Unplanned occurence of preceding whitespace?
@@ -131,15 +133,6 @@ function _GetDatatype(meta)
 	else
 		return 'Undefined'
 endfunction
-
-" REDUNDANT
-function _Evaluate_numeric_cell()
-	let cell = getline(curpos()[2])
-	let cellcontents = split(cell)[3]
-	echo cellcontents
-endfunction
-
-command EvaluateNumericCell :call _Evaluate_numeric_cell()
 
 " --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
 

@@ -57,14 +57,14 @@ The `.tae` file format
 ----------------------
 `.tae` files are similar to `.tsv` files in that they contain rows and columns
 of cells. All cells, including cells last in a row, are marked by a subsequent
-\<TAB\> character (0x09).
+TAB character `^I` (0x09).
 
 Cells contain an initial metadata string, a whitespace separator, and data, in
 that order. For example, this cell has metadata `'`, a single space ` `, and
-string data `Some data`, followed by a \<TAB\> character:
+string data `Some data`, followed by a TAB character:
 
 ```
-' Some data<TAB>
+' Some data^I
 ```
 
 Data types
@@ -89,16 +89,19 @@ The basic data types are:
 A string data type is a unicode sequence of characters.
 A string is denoted in metadata by the `'` character (0x27).
 
-Strings cannot contain \<TAB\> characters. These are escaped with `\t`.
+Strings cannot contain TAB characters. These are escaped with `\t`.
+
+> The following was updated on 2019 Dec 18.
 
 Strings cannot contain preceding or anticeding naked whitespace. Such whitespace
-must be escaped with a backslash, like `\ `, or with `\s`. Only the very first
-and very last whitespace character needs to be escaped - the remaining
-whitespace within those two  will be considered data. For example:
+must be contained within an escaped pipe sequence `\|`. The pipe sequence itself
+will be ignored, including within the string. However, there must be whitespace
+between the metadata and the first pipe sequence.
 
 ```tae
-'    \  Strings with 2 preceding and 2 anteceding spaces \     <TAB>
-'    \s Strings with 2 preceding and 2 anteceding spaces \s    <TAB>
+'      A string with 0 preceding and 1 anteceding spaces \|^I	VALID
+'\|    A string with 4 preceding and 2 anteceding spaces  \|     ^I	INVALID
+'   \| A string with 1 preceding and 0 anteceding spaces     ^I	VALID
 ```
 
 ### Number
