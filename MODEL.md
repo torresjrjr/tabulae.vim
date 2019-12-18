@@ -172,26 +172,73 @@ Cells in a `.tae` file can contains equations which are evaluated at the
 view buffer.
 
 Equations are marks in metadata by the `=` character (0x3D).
+
 ```tae
-#= Sum(2D:4D)
-?= Or(A1:E1)
-'= Cat(F1:F10)
+#= avg(2D:4D)
+?= not(or(A1,B1))
+'= cat(F1:F10)
 ```
 
-Metadata
---------
+Coordinates and ranges
+----------------------
+A cell is refered to by its address - its row and its column number -
+represented by an alphanumerical sequence:
+```tae
+[row][column]
+A1      B46     Z3      AA1     AB23    ABC123
+```
 
+Cells are simply a position in a spreadsheet. Cells are not unique; they do not
+have an ID.
+
+> In the future, cells may have the capacity to have an ID.
+
+Ranges are a shorthand for a sequence of cell addresses. When evaluated, they
+exapand into a list of cell addresses.
+
+```tae
+A1:A4    =>    A1,A2,A3,A4
+A1:C1    =>    A1,B1,C1
+A1:C2    =>    A1,B1,C1,A2,B2,C2
+```
+
+When evaluated, addresses are sorted alphabetically, then numerically - by
+column, then by row.
+
+Metadata
+-------- 
 > In progress.
 
 Metadata is the first part of a cell which encodes information about the cell.
 It is always from the first character of a cell upto and excluding the first
 whitespace character.
 
+The syntax of a metadata string looks like this:
+
+```tae
+{type}[fmt-seq][=]
+```
+
+A 'datatype' char, an optional 'format sequence', and an optional `=`.
+
+Examples:
+
+```tae
+'<bI			String, left_align, bold, not_italic.
+'buhw16;		String, bold, header={width=16}.
+#>d2;s3;=		Number, right_align, digits=2, sig_fig=3, equation.
+#>d2;s3;=		Number, right_align, digits=2, sig_fig=3, equation.
+?|c=			Boolean, centre, colour.
+D				Datetime.
+```
+
+### List of metadata characters
+
 - `!` 
 - `"` 
 - `#` - Denotes a Number type.
 - `$` 
-- `%` - Format number as percentage.
+- `%` - Formats number as percentage.
 - `'` 
 - `(` 
 - `)` 
@@ -204,18 +251,18 @@ whitespace character.
 
 - `:` 
 - `;` 
-- `<` - Left flush formatting.
+- `<` - Formats as left align.
 - `=` - Denotes an equation.
-- `>` - Right flush formatting.
+- `>` - Formats as right align.
 - `?` - Denotes a Boolean type.
 - `@` 
 - `[` 
 - `]` 
 - `^` 
 - `_` 
-- `\`` Denotes an evaluated cell.
+- `\x60` - Denotes an evaluated cell.
 - `{` 
-- `|` 
+- `|` - Formats as centered.
 - `}` 
 - `~` 
 
