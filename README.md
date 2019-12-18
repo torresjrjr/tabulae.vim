@@ -43,6 +43,9 @@ Progress
   - Consider how 'workbooks' would work (a spreadsheet on each tab, with methods
     to link data and navigate between one other, like `gf`). How would buffer
     and tab management work? How would a workbook file structure work?
+  - Consider conditional or inherited formatting based on the metadata of a
+    cell's column's header cell. This could save space by only writting metadata
+    once per each column
 
 Contribute
 ----------
