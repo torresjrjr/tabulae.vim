@@ -32,31 +32,37 @@ function! _InitView()
 	
 	execute "badd ".viewbuf
 	%yank t
-	
 	execute "buffer ".viewbuf
-	" Paste taebuf content into viewbuf.
 	put! t
+	
 	" Delete extra line and move cursor to first tab.
 	normal Gddgg0f	
 	let b:vcur = {'x':1, 'y':1} " .tae.view buffer cursor data.
-	set bufhidden=hide | setlocal tabstop=24 softtabstop=0 
+	set bufhidden=hide
 	set showbreak=`
 	set list listchars=eol:¬,tab:>\ \|,nbsp:%
 	set cursorline cursorcolumn
+	setlocal tabstop=24 softtabstop=0 
+	
+	" HARDCODED
+	setlocal vartabstop=24,12,18,18,24
 endfunction
 
 function! _EvalView() 
+	let save_cursor = getcurpos()
 	let b:viewbuf_data = {
 \		'rows':line('$'),
 \		'cols':len(substitute(getline(1), '[^\t]', '', 'g'))
 \	}
 	" echomsg "DEBUG: b:viewbuf_data = ".b:viewbuf_data
 	
-	" Iterate over all cell positions (See _itercellpos() ).
+	" Iterate over all cell positions ( See: _itercellpos() ).
 	for pos in _itercellpos(b:viewbuf_data['rows'], b:viewbuf_data['cols'])
 		" pos := [int, int]
-		let evalstatus =  _EvalCell(pos)
+		let currentcell =  _EvalCell(pos)
 	endfor
+
+	call setpos('.', save_cursor)
 endfunction
 
 " --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
@@ -80,27 +86,32 @@ function _EvalCell(pos)
 	
 	" CASE: Cell is empty.
 	if cell == "\t"
-		return "Empty"
+		return 0
 
 	" CASE: Cell is already evaluated.
 	elseif cell[0] == g:tabulae_evaluated_marker
-		return "Already Evaluated"
+		return cell[1:]
 	
 	" CASE: Unplanned occurence of preceding whitespace?
 	elseif cell[0] == ' '
-		return "Error: Unexpected preceding whitespace."
+		echoerr "Unexpected preceding whitespace."
 	endif
 	
-	let [metadata, data] = _SplitCell(cell)
+	let [meta, data] = _SplitCell(cell)
+
+	" let metadata = _ParseMetadata(meta)
+	" if metadata['equation'] == l
+	"	formula = data
+	"	data = _EvalFormula(formula)
 	
-	let datatype = _GetDatatype(metadata)
+	let datatype = _GetDatatype(meta)
 	" echomsg "DEBUG: datatype = ".datatype
 	
 	" Creating evaluated string.
 	if datatype == 'String'
-		let eval = '`S: '.data.'	'
+		let eval = '`S:'.data.'	'
 	elseif datatype == 'Number'
-		let eval = '`N: '.data.'	'
+		let eval = '`N:'.data.'	'
 	endif
 	
 	let status = "Evaluated"
@@ -109,6 +120,9 @@ function _EvalCell(pos)
 endfunction
 
 function _SetCell(pos, cell, eval) 
+	""" Sets cell with new content.
+	""" Unintentionlly but desireably sets all matching cells, which would
+	""" minimise total cell evaluations.
 	execute "%s/".a:cell."/".a:eval."/g"
 	return "Cell Set"
 endfunction
@@ -125,6 +139,30 @@ function _SplitCell(cell)
 	return [metadata, data]
 endfunction
 
+function _EvalFormula(formula)
+	" let expformula = _ExpandFormula(a:formula)
+	" 
+	" eval = execute(expformula)
+	" return eval
+endfunction
+
+function _ParseMetadata(meta)
+	let meta = {}
+	
+	for i in range(len(a:meta))
+		let char = a:meta[i]
+		
+		if i == 0
+			if _CheckParsedDatatype(char)
+				let meta['datatype'] = char
+				continue
+			else
+				echoerr "Metadata datatype char unrecognised."
+			endif
+		endif 
+	endfor 
+endfunction
+
 function _GetDatatype(meta)
 	if     stridx(a:meta, "'") == 0
 		return 'String'
@@ -132,6 +170,7 @@ function _GetDatatype(meta)
 		return 'Number'
 	else
 		return 'Undefined'
+	endif
 endfunction
 
 " --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
