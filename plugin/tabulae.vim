@@ -23,6 +23,32 @@ setlocal tabstop=24 softtabstop=0
 let g:tabulae_evaluated_marker = '`'
 
 " FUNCTIONS
+"
+function _InitBufs()
+	" Creating buffer names.
+	let taebuf  = bufname("%") " workbook.tae
+	let evalbuf = taebuf."eval" " workbook.tae.eval
+	
+	let sheets = parse_tae_for_sheets() 
+	" 'books', 'orders', 'customers'
+	for sheet in sheets
+		let viewbufs += taebuf.sheet
+		" workbook.tae.books, workbook.tae.orders, workbook.tae.customers
+	endfor
+	
+	" Creating buffers.
+	execute "badd ".evalbuf
+	for viewbuf in viewbufs
+		execute "badd ".viewbuf
+	endfor 
+endfunction
+
+function _UpdateBufs()
+	call copy_taebuf_to_evalbuf()
+	call process_evalbuf()
+	call update_viewbufs()
+endfunction
+
 
 function! _InitView()
 	set bufhidden=hide

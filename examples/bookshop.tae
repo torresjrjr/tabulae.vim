@@ -1,0 +1,27 @@
+% SS index
+' title	' bookshop workbook
+' author	' Anis Buchmacher
+% SE index
+% SS books
+'h Book ID	'h Title	'h Author	'h Year Published	'h Price	
+' 23	' Philosophiæ Naturalis Principia Mathematica	' Isaac Newton	' 1687	# 94.00	
+' 4981	' Barry's Big Book of Spitties	' Barry Tyler	' 2003	# 7.99	
+' 1025	' Cabin Porn	' Cabin Porn	' 2007	# 13.99	
+' 4085	' The Bible: New International Version	' NIV	' 2016	# 6.00	
+' 1440	' Introduction to Linux	' Linus Torvalds	' 1998	# 19.43	
+% SE books
+% SS orders
+'h Order ID	'h Book Title	'h Book ID	'h Customer ID	'h Price	
+' 41	' Philosophiæ Naturalis Principia Mathematica	' 23	' 1687	
+' 42	' Philosophiæ Naturalis Principia Mathematica	' 23	' 1687	
+' 21	' Barry's Big Book of Spitties	' 4981	' 2003	
+' 8	' Cabin Porn	' 1025	' 2007	
+' 7	' Cabin Porn	' 1025	' 2007	
+' 10	' The Bible: New International Version	' 4805	' 2016	
+' 16	' The Bible: New International Version	' 4805	' 2016	
+' 9	' The Bible: New International Version	' 4805	' 2016	
+' 6	' The Bible: New International Version	' 4805	' 2016	
+' 46	' Introduction to Linux	' 1440	' 1998	
+' 47	' Introduction to Linux	' 1440	' 1998	
+				'f= sum(:Price:)
+% SE orders
