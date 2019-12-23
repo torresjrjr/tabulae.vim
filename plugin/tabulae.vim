@@ -24,23 +24,49 @@ let g:tabulae_evaluated_marker = '`'
 
 " FUNCTIONS
 "
-function _InitBufs()
+function _InitBufs(taebuf="")
 	" Creating buffer names.
-	let taebuf  = bufname("%") " workbook.tae
+	if a:taebuf == ""
+		let taebuf  = bufname("%") " workbook.tae
+	else
+		let taebuf = a:taebuf
+	endif
 	let evalbuf = taebuf."eval" " workbook.tae.eval
-	
-	let sheets = parse_tae_for_sheets() 
+
+	let taebuf_metadata = parse_taebuf_metadata(taebuf)
+	let sheets = taebuf_metadata.sheets 
 	" 'books', 'orders', 'customers'
+	
+	let viewbufs = []
 	for sheet in sheets
-		let viewbufs += taebuf.sheet
-		" workbook.tae.books, workbook.tae.orders, workbook.tae.customers
+		let sheetname = sheet.name
+		let viewbufs += taebuf..sheetname
+		" workbook.tae.index, workbook.tae.books, workbook.tae.orders.
 	endfor
 	
-	" Creating buffers.
-	execute "badd ".evalbuf
+	" Yank the whole taebuf to the t register, and reset argument list.
+	execute "args "..taebuf
+	argdo %yank t
+	%argdelete
+	
+	" Creating buffers, with respective grids.
+	execute "badd "..evalbuf
 	for viewbuf in viewbufs
-		execute "badd ".viewbuf
+		execute "badd "..viewbuf
+		execute "$argadd "..viewbuf
 	endfor 
+	
+	" Paste taebuf into viewbufs (argument list).
+	argdo put! t 
+	" Delete extra line and move cursor to first tab.
+	argdo normal Gddgg0f	
+	argdo setlocal bufhidden=hide
+	argdo setlocal nowrap
+	argdo setlocal showbreak=`
+	argdo setlocal list listchars=eol:¬,tab:>\ \|,nbsp:%
+	argdo setlocal cursorline cursorcolumn
+	argdo setlocal tabstop=24 softtabstop=0 
+	argdo setlocal vartabstop=24,12,18,18,24 varsofttabstop=0 " HARDCODED
 endfunction
 
 function _UpdateBufs()
@@ -94,7 +120,7 @@ endfunction
 " --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
 
 function _GetCell(pos) 
-	""" Returns String of whole cell including all characters and <TAB> (^I)
+	""" Returns String of whole cell including all characters and TAB (^I)
 	""" Example: cell = "#= 123.45^I"
 	let line = getline(a:pos[0])
 	let row  = split(line, '\t\zs', 1)
@@ -213,6 +239,17 @@ function _itercellpos(nrows, ncols)
 		endfor
 	endfor
 	return cellposlist
+endfunction
+
+" --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
+
+function _parse_taebuf_metadata(taebuf)
+	let metadata = {'sheets':
+	\	[
+	\		{'name':'index'}
+	\	]
+	\}
+	return metadata
 endfunction
 
 " --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
