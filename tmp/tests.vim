@@ -10,6 +10,10 @@ fu TestA()
 	call _EvalView()
 endfu
 
+fu TestB()
+	call _InitBufs()
+endfu
+
 " === === === === === === === ===
 
-call TestA()
+call TestB()

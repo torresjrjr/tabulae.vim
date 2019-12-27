@@ -27,40 +27,49 @@ let g:tabulae_evaluated_marker = '`'
 function _InitBufs(taebuf="")
 	" Creating buffer names.
 	if a:taebuf == ""
-		let taebuf  = bufname("%") " workbook.tae
+		let taebuf = bufname("%") " workbook.tae
 	else
 		let taebuf = a:taebuf
 	endif
-	let evalbuf = taebuf."eval" " workbook.tae.eval
+	let evalbuf = taebuf.".__eval__" " workbook.tae.eval
 
-	let taebuf_metadata = parse_taebuf_metadata(taebuf)
+	let taebuf_metadata = _parse_taebuf_metadata(taebuf)
 	let sheets = taebuf_metadata.sheets 
-	" 'books', 'orders', 'customers'
+	" 'books dict', 'orders dict', 'customers dict'
 	
+	echo "DEBUG: sheets =" sheets
 	let viewbufs = []
 	for sheet in sheets
-		let sheetname = sheet.name
-		let viewbufs += taebuf..sheetname
+		let sheetname = sheet['name']
+		let viewbufs += [taebuf.."."..sheetname]
 		" workbook.tae.index, workbook.tae.books, workbook.tae.orders.
 	endfor
+	echo "DEBUG: viewbufs =" viewbufs
 	
 	" Yank the whole taebuf to the t register, and reset argument list.
+	%argdelete
 	execute "args "..taebuf
+	argdo setlocal bufhidden=hide
 	argdo %yank t
 	%argdelete
 	
 	" Creating buffers, with respective grids.
 	execute "badd "..evalbuf
+	execute "$argadd "..evalbuf
 	for viewbuf in viewbufs
 		execute "badd "..viewbuf
 		execute "$argadd "..viewbuf
 	endfor 
+	echo "DEBUG: args =" execute("args")
 	
+	argdo setlocal bufhidden=hide
 	" Paste taebuf into viewbufs (argument list).
 	argdo put! t 
 	" Delete extra line and move cursor to first tab.
 	argdo normal Gddgg0f	
-	argdo setlocal bufhidden=hide
+	
+	execute "$argadd "..taebuf
+	
 	argdo setlocal nowrap
 	argdo setlocal showbreak=`
 	argdo setlocal list listchars=eol:¬,tab:>\ \|,nbsp:%
@@ -69,12 +78,105 @@ function _InitBufs(taebuf="")
 	argdo setlocal vartabstop=24,12,18,18,24 varsofttabstop=0 " HARDCODED
 endfunction
 
-function _UpdateBufs()
-	call copy_taebuf_to_evalbuf()
-	call process_evalbuf()
-	call update_viewbufs()
+function _UpdateView(viewbuf="")
+	" Get viewbuf name.
+	if a:viewbuf == ""
+		let viewbuf = bufname("%") " workbook.tae.books
+	else
+		let viewbuf = a:viewbuf
+	endif
+	
+	" Get evalbuf name.
+	let evalbuf = join(split(viewbuf, '.')[:-2], '.')..".__eval__"
+	
+	call ProcEvalBuf()
+	call ProcViewBuf()
 endfunction
 
+" --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
+
+function! _ProcEvalBuf() 
+	let save_cursor = getcurpos()
+	let b:viewbuf_data = {
+\		'rows':line('$'),
+\		'cols':len(substitute(getline(1), '[^\t]', '', 'g'))
+\	}
+	" echomsg "DEBUG: b:viewbuf_data = ".b:viewbuf_data
+	
+	" Iterate over all cell positions ( See: _itercellpos() ).
+	for pos in _itercellpos(b:viewbuf_data['rows'], b:viewbuf_data['cols'])
+		" pos := [int, int]
+		let currentcell =  _ProcEvalCell(pos)
+	endfor
+	
+	call setpos('.', save_cursor)
+endfunction
+
+" --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
+
+function _GetCell(pos) 
+	""" Returns String of whole cell including all characters and TAB (^I)
+	""" Example: cell = "#= 123.45^I"
+	let line = getline(a:pos[0])
+	let row  = split(line, '\t\zs', 1)
+	let cell = row[a:pos[1] - 1]
+	return cell
+endfunction
+
+function _ProcEvalCell(pos)
+	""" Gets, evaluates, and sets a cell at position `pos`.
+	""" Recursively evaluates if cell is equation with references (TBC).
+	" echomsg "DEBUG: pos = ".join(a:pos, ', ')
+	
+	let cell = _GetCell(a:pos)
+	" echomsg "DEBUG: cell = "..cell
+	
+	" CASE: Cell is empty.
+	if cell == "\t"
+		return v:none
+
+	" CASE: Unplanned occurence of preceding whitespace?
+	elseif cell[0] == ' '
+		echoerr "Unexpected preceding whitespace."
+	endif
+	
+	let [meta, data] = _SplitCell(cell)
+	
+	" CASE: Cell is already evaluated.
+	if meta[len(meta)-1] == "="
+		return data
+	endif
+	
+	" let metadata = _ParseMetadata(meta)
+	" if metadata['equation'] == l
+	"	formula = data
+	"	data = _EvalFormula(formula)
+	
+	let datatype = _GetDatatype(meta)
+	" echomsg "DEBUG: datatype = ".datatype
+	
+	" Creating evaluated string.
+	if datatype == 'String'
+		let eval = '`S:'.data.'	'
+	elseif datatype == 'Number'
+		let eval = '`N:'.data.'	'
+	endif
+	
+	let status = "Evaluated"
+	let setstatus = _SetCell(a:pos, cell, eval)
+	return status
+endfunction
+
+function _SetCell(pos, cell, eval) 
+	""" Sets cell with new content.
+	""" Unintentionlly but desireably sets all matching cells, which would
+	""" minimise total cell evaluations.
+	execute "%s/".a:cell."/".a:eval."/g"
+	return "Cell Set"
+endfunction
+
+
+" --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
 
 function! _InitView()
 	set bufhidden=hide
@@ -246,7 +348,9 @@ endfunction
 function _parse_taebuf_metadata(taebuf)
 	let metadata = {'sheets':
 	\	[
-	\		{'name':'index'}
+	\		{'name':'index'},
+	\		{'name':'books'},
+	\		{'name':'orders'},
 	\	]
 	\}
 	return metadata

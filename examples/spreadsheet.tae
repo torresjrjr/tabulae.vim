@@ -2,4 +2,4 @@
 ' CAVENDISH BANANAS	# 0.39	# 5	#= prod(2B:2C)	
 ' FROZEN PEAS	# 3.49	# 1	#= prod(3B:3C)	
 ' BARRYS BAKED BEANS	# 1.99	# 1	#= prod(4B:4C)	
-' Total:		#= sum(2C:4C)	#= sum(2D:4D)	
+' #= 2 + 3		#= sum(2C:4C)	#= sum(2D:4D)	
