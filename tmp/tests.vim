@@ -14,6 +14,11 @@ fu TestB()
 	call _InitBufs()
 endfu
 
+fu TestC()
+	call _InitBufs()
+	call _ProcEvalBuf()
+endfu
+
 " === === === === === === === ===
 
 call TestB()

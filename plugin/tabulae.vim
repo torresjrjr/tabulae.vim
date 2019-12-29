@@ -75,7 +75,7 @@ function _InitBufs(taebuf="")
 	argdo setlocal list listchars=eol:¬,tab:>\ \|,nbsp:%
 	argdo setlocal cursorline cursorcolumn
 	argdo setlocal tabstop=24 softtabstop=0 
-	argdo setlocal vartabstop=24,12,18,18,24 varsofttabstop=0 " HARDCODED
+	argdo setlocal vartabstop=24 varsofttabstop=0
 endfunction
 
 function _UpdateView(viewbuf="")
@@ -89,8 +89,8 @@ function _UpdateView(viewbuf="")
 	" Get evalbuf name.
 	let evalbuf = join(split(viewbuf, '.')[:-2], '.')..".__eval__"
 	
-	call ProcEvalBuf()
-	call ProcViewBuf()
+	call _ProcEvalBuf()
+	call _ProcViewBuf(viewbuf)
 endfunction
 
 " --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
@@ -106,7 +106,7 @@ function! _ProcEvalBuf()
 	" Iterate over all cell positions ( See: _itercellpos() ).
 	for pos in _itercellpos(b:viewbuf_data['rows'], b:viewbuf_data['cols'])
 		" pos := [int, int]
-		let currentcell =  _ProcEvalCell(pos)
+		let currentcell = _ProcEvalCell(pos)
 	endfor
 	
 	call setpos('.', save_cursor)
@@ -116,27 +116,34 @@ endfunction
 
 function _GetCell(pos) 
 	""" Returns String of whole cell including all characters and TAB (^I)
-	""" Example: cell = "#= 123.45^I"
+	""" Example: cell = "#= 123.45	"
 	let line = getline(a:pos[0])
+	" echo "DEBUG: line = "..line
+
 	let row  = split(line, '\t\zs', 1)
+	" echo "DEBUG: row = "..join(row, ', ')
+
 	let cell = row[a:pos[1] - 1]
+	" echo "DEBUG: cell = "..cell
 	return cell
 endfunction
 
 function _ProcEvalCell(pos)
 	""" Gets, evaluates, and sets a cell at position `pos`.
 	""" Recursively evaluates if cell is equation with references (TBC).
-	" echomsg "DEBUG: pos = ".join(a:pos, ', ')
+	" echo "DEBUG: pos = "..join(a:pos, ', ')
 	
 	let cell = _GetCell(a:pos)
-	" echomsg "DEBUG: cell = "..cell
+	" echo "DEBUG: cell = "..cell
+	
+	" echo "DEBUG: cell = "..cell
 	
 	" CASE: Cell is empty.
 	if cell == "\t"
 		return v:none
 
 	" CASE: Unplanned occurence of preceding whitespace?
-	elseif cell[0] == ' '
+	elseif cell[0] == " "
 		echoerr "Unexpected preceding whitespace."
 	endif
 	
@@ -144,27 +151,22 @@ function _ProcEvalCell(pos)
 	
 	" CASE: Cell is already evaluated.
 	if meta[len(meta)-1] == "="
-		return data
+		return cell
 	endif
 	
-	" let metadata = _ParseMetadata(meta)
+	" let metadata = _ParseCellMeta(meta)
 	" if metadata['equation'] == l
 	"	formula = data
 	"	data = _EvalFormula(formula)
 	
 	let datatype = _GetDatatype(meta)
-	" echomsg "DEBUG: datatype = ".datatype
+	" echo"DEBUG: datatype = "..datatype
 	
-	" Creating evaluated string.
-	if datatype == 'String'
-		let eval = '`S:'.data.'	'
-	elseif datatype == 'Number'
-		let eval = '`N:'.data.'	'
-	endif
+	let value = _EvalCellData(meta, data)
+	let newcell = meta..' '..value..'	'
 	
-	let status = "Evaluated"
-	let setstatus = _SetCell(a:pos, cell, eval)
-	return status
+	let set_cell_status = _SetCell(a:pos, cell, newcell)
+	return newcell
 endfunction
 
 function _SetCell(pos, cell, eval) 
@@ -175,6 +177,23 @@ function _SetCell(pos, cell, eval)
 	return "Cell Set"
 endfunction
 
+" --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
+
+function _EvalCellData(meta, data)
+	" call _SubstituteAliases(a:data)
+	
+	let value = eval(a:data)
+
+	" tmp example code.
+	" if datatype == 'String'
+	" 	let value = '`S:'.data
+	" elseif datatype == 'Number'
+	" 	let value = '`N:'.data
+	" endif
+	" tmp end.
+	
+	return value
+endfunction
 
 " --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
 
@@ -233,10 +252,12 @@ endfunction
 function _EvalCell(pos)
 	""" Gets, evaluates, and sets a cell at position `pos`.
 	""" Recursively evaluates if cell is equation with references (TBC).
-	" echomsg "DEBUG: pos = ".join(a:pos, ', ')
+	echo "DEBUG: pos = "..join(a:pos, ', ')
 	
 	let cell = _GetCell(a:pos)
 	" echomsg "DEBUG: cell = ".cell
+	
+	echo "DEBUG: cell = "..cell
 	
 	" CASE: Cell is empty.
 	if cell == "\t"
@@ -253,7 +274,7 @@ function _EvalCell(pos)
 	
 	let [meta, data] = _SplitCell(cell)
 
-	" let metadata = _ParseMetadata(meta)
+	" let metadata = _ParseCellMeta(meta)
 	" if metadata['equation'] == l
 	"	formula = data
 	"	data = _EvalFormula(formula)
@@ -300,7 +321,7 @@ function _EvalFormula(formula)
 	" return eval
 endfunction
 
-function _ParseMetadata(meta)
+function _ParseCellMeta(meta)
 	let meta = {}
 	
 	for i in range(len(a:meta))
