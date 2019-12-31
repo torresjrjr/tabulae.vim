@@ -51,23 +51,24 @@ Todo:
   once per each column.
 
 ### 2019 December 31 - New Years Eve
-Completely new model. There are now more functions handling buffers, cells and
-more. New first draft eval buffer processing functions now work!
+Roo! Completely new model. There are now more functions handling buffers, cells
+and more. New first draft eval buffer processing functions now work!
 
-![eval buffer - before processing](https://i.imgur.com/fIT5Z5j.png)
+![eval buffer - before processing](https://i.imgur.com/fIT5Z5j.png)  
 _eval buffer - before processing_
 
-![eval buffer - after processing](https://i.imgur.com/1nSBcjB.png)
+![eval buffer - after processing](https://i.imgur.com/1nSBcjB.png)  
 _eval buffer - after processing_
 
-`.tae` files are now read into an intermediate _eval_ buffer, where cells
-with metadata containing the equation/formula attribute are evaluated
-(recursively if dependant on other un-evaluated cells).
+`.tae` files are now read into an intermediate _eval_ buffer, where cells with
+metadata containing the equation/formula attribute are evaluated (recursively if
+dependant on other un-evaluated cells).
 
-Then, further proccesing is given to a _view_ buffer, which will correspond to an
-individual spreadsheet (meaning multiple _view_ buffers are possible). Functions
-will iterate over all cells, formatting them by there metadata. The result is a
-simple, tab-delimited spreadsheet, formatted and with all evaluated values.
+Then, further proccesing is given to a _view_ buffer, which will correspond to
+an individual spreadsheet (meaning multiple _view_ buffers are possible).
+Functions will iterate over all cells, formatting them by there metadata. The
+result is a simple, tab-delimited spreadsheet, formatted and with all evaluated
+values.
 
 These view buffers will have a special interface, with the cursor spanning a
 cell, and motion and editing based on a spreadsheet design. `hjkl` will navigate
@@ -84,7 +85,8 @@ Otherwise, the default way to edit the spreadsheet will be to open up the `.tae`
 file with the cursor at the corresponding cell. Of course, users would be forced
 to also think about conforming to the format, and not messing the whole file up.
 
-Much is left for imagination. I hope to continue this to it's minimum viable end.
+Much is left for imagination. I hope to continue this to it's minimum viable
+end. Happy new year 🐦 !
 
 Contribute
 ----------

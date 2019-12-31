@@ -20,7 +20,6 @@ set cpo&vim
 setlocal tabstop=24 softtabstop=0
 
 " VARIABLES
-let g:tabulae_evaluated_marker = '`'
 
 " FUNCTIONS
 "
@@ -31,7 +30,7 @@ function _InitBufs(taebuf="")
 	else
 		let taebuf = a:taebuf
 	endif
-	let evalbuf = taebuf.".__eval__" " workbook.tae.eval
+	let evalbuf = taebuf.".__eval__" " workbook.tae.__eval__
 
 	let taebuf_metadata = _parse_taebuf_metadata(taebuf)
 	let sheets = taebuf_metadata.sheets 
