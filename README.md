@@ -52,7 +52,13 @@ Todo:
 
 ### 2019 December 31 - New Years Eve
 Completely new model. There are now more functions handling buffers, cells and
-more.
+more. New first draft eval buffer processing functions now work!
+
+![eval buffer - before processing](https://i.imgur.com/fIT5Z5j.png)
+_eval buffer - before processing_
+
+![eval buffer - after processing](https://i.imgur.com/1nSBcjB.png)
+_eval buffer - after processing_
 
 `.tae` files are now read into an intermediate _eval_ buffer, where cells
 with metadata containing the equation/formula attribute are evaluated

@@ -134,14 +134,12 @@ function _ProcEvalCell(pos)
 	" echo "DEBUG: pos = "..join(a:pos, ', ')
 	
 	let cell = _GetCell(a:pos)
-	" echo "DEBUG: cell = "..cell
-	
-	" echo "DEBUG: cell = "..cell
+	echo "DEBUG: cell = "..cell
 	
 	" CASE: Cell is empty.
 	if cell == "\t"
 		return v:none
-
+	
 	" CASE: Unplanned occurence of preceding whitespace?
 	elseif cell[0] == " "
 		echoerr "Unexpected preceding whitespace."
@@ -150,9 +148,11 @@ function _ProcEvalCell(pos)
 	let [meta, data] = _SplitCell(cell)
 	
 	" CASE: Cell is already evaluated.
-	if meta[len(meta)-1] == "="
+	if meta[len(meta)-1] != "="
 		return cell
 	endif
+	
+	let meta = substitute(meta, '=$', '', '')
 	
 	" let metadata = _ParseCellMeta(meta)
 	" if metadata['equation'] == l
@@ -163,17 +163,21 @@ function _ProcEvalCell(pos)
 	" echo"DEBUG: datatype = "..datatype
 	
 	let value = _EvalCellData(meta, data)
-	let newcell = meta..' '..value..'	'
+	let valuestr = string(value)
+	let newcell = meta..' '..valuestr..'	'
 	
 	let set_cell_status = _SetCell(a:pos, cell, newcell)
 	return newcell
 endfunction
 
-function _SetCell(pos, cell, eval) 
+function _SetCell(pos, oldcell, newcell) 
 	""" Sets cell with new content.
 	""" Unintentionlly but desireably sets all matching cells, which would
 	""" minimise total cell evaluations.
-	execute "%s/".a:cell."/".a:eval."/g"
+	let oldcell = escape(a:oldcell, "/\*")
+	let newcell = escape(a:newcell, "/\*")
+	
+	execute "%s/"..oldcell.."/"..newcell.."/g"
 	return "Cell Set"
 endfunction
 
@@ -240,7 +244,7 @@ endfunction
 
 " --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
 
-function _GetCell(pos) 
+function _GetCell_depreciated(pos) 
 	""" Returns String of whole cell including all characters and TAB (^I)
 	""" Example: cell = "#= 123.45^I"
 	let line = getline(a:pos[0])
@@ -294,7 +298,7 @@ function _EvalCell(pos)
 	return status
 endfunction
 
-function _SetCell(pos, cell, eval) 
+function _SetCell_depreciated(pos, cell, eval) 
 	""" Sets cell with new content.
 	""" Unintentionlly but desireably sets all matching cells, which would
 	""" minimise total cell evaluations.
