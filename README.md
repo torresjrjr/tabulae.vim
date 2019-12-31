@@ -86,7 +86,7 @@ file with the cursor at the corresponding cell. Of course, users would be forced
 to also think about conforming to the format, and not messing the whole file up.
 
 Much is left for imagination. I hope to continue this to it's minimum viable
-end. Happy new year 🐦 !
+end. Happy new year 🐦 🎉 !
 
 Contribute
 ----------
