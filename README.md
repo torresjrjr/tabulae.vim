@@ -56,7 +56,7 @@ more.
 
 `.tae` files are now read into an intermediate _eval_ buffer, where cells
 with metadata containing the equation/formula attribute are evaluated
-(recursively if dependant on other un-evaluated cells.
+(recursively if dependant on other un-evaluated cells).
 
 Then, further proccesing is given to a _view_ buffer, which will correspond to an
 individual spreadsheet (meaning multiple _view_ buffers are possible). Functions
@@ -65,13 +65,18 @@ simple, tab-delimited spreadsheet, formatted and with all evaluated values.
 
 These view buffers will have a special interface, with the cursor spanning a
 cell, and motion and editing based on a spreadsheet design. `hjkl` will navigate
-the view buffer spreadsheet by cells, and `i`/`c`/`d` will edit cells.
+the view buffer spreadsheet by cells, and `i`, `c`, `d`, etc will edit cells.
 
-In the future, I hope to create an _edit_ buffer, which will handle single cells
-and their content. Such a buffer would handle editing easier, as opposed to the
-given method of editing the `.tae` file by hand. Content once `ZZ`'ed could be
-preproccessed; for example, a multi-line string could have it's newline chars
-converted to `\n` escape sequences in compliance to the `.tae` specification.
+In the future, I hope to create a popup-like _edit_ buffer, which will handle
+single cells and their content. Such a buffer would handle editing easier, as
+opposed to the only other method of editing the `.tae` file by hand. Content
+once `ZZ`'ed could be preproccessed; for example, a multi-line string could have
+it's newline chars converted to `\n` escape sequences in compliance to the
+`.tae` format specification.
+
+Otherwise, the default way to edit the spreadsheet will be to open up the `.tae`
+file with the cursor at the corresponding cell. Of course, users would be forced
+to also think about conforming to the format, and not messing the whole file up.
 
 Much is left for imagination. I hope to continue this to it's minimum viable end.
 
