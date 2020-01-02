@@ -24,30 +24,40 @@ setlocal tabstop=24 softtabstop=0
 " FUNCTIONS
 "
 function _InitBufs(taebuf="")
+	""" Initialises buffers for a `.tae` file.
+	
 	" Creating buffer names.
+	" Creating `.tae` file buffer name.
 	if a:taebuf == ""
 		let taebuf = bufname("%") " workbook.tae
 	else
 		let taebuf = a:taebuf
 	endif
+	
+	" Creating eval-buffer name.
 	let evalbuf = taebuf.".__eval__" " workbook.tae.__eval__
-
+	
+	" Extracting file's metadata and getting spreadsheet names.
 	let taebuf_metadata = _parse_taebuf_metadata(taebuf)
 	let sheets = taebuf_metadata.sheets 
 	" 'books dict', 'orders dict', 'customers dict'
 	
-	echo "DEBUG: sheets =" sheets
+	call DEBUG('_InitBufs', 'sheets', sheets)
+	
+	" Creating view-buffer names for each spreadsheet.
 	let viewbufs = []
 	for sheet in sheets
 		let sheetname = sheet['name']
 		let viewbufs += [taebuf.."."..sheetname]
 		" workbook.tae.index, workbook.tae.books, workbook.tae.orders.
 	endfor
-	echo "DEBUG: viewbufs =" viewbufs
+	call DEBUG('_InitBufs', 'viewbufs', viewbufs)
 	
-	" Yank the whole taebuf to the t register, and reset argument list.
+	" All necessary buffer names are now created.
+	
+	" Yank the whole taebuf to the t-register, and reset argument list.
 	%argdelete
-	execute "args "..taebuf
+	execute "argadd "..taebuf
 	argdo setlocal bufhidden=hide
 	argdo %yank t
 	%argdelete
@@ -59,23 +69,27 @@ function _InitBufs(taebuf="")
 		execute "badd "..viewbuf
 		execute "$argadd "..viewbuf
 	endfor 
-	echo "DEBUG: args =" execute("args")
+	call DEBUG('_InitBufs', 'execute("args")', execute("args"))
 	
+	" Settings which apply to relevant buffers except .tae file:
+	argdo setlocal buftype=nofile
 	argdo setlocal bufhidden=hide
-	" Paste taebuf into viewbufs (argument list).
+	argdo setlocal noswapfile
+	" Paste taebuf into evalbuf & viewbufs (argument list).
 	argdo put! t 
 	" Delete extra line and move cursor to first tab.
 	argdo normal Gddgg0f	
 	
+	" Add .tae file to argument list.
 	execute "$argadd "..taebuf
 	
+	" Settings which now apply to all relevant buffers:
 	argdo setlocal nowrap
-	argdo setlocal showbreak=`
 	argdo setlocal list listchars=eol:¬,tab:>\ \|,nbsp:%
 	argdo setlocal cursorline cursorcolumn
-	argdo setlocal tabstop=24 softtabstop=0 
 	argdo setlocal vartabstop=24 varsofttabstop=0
 endfunction
+
 
 function _UpdateView(viewbuf="")
 	" Get viewbuf name.
@@ -100,7 +114,7 @@ function! _ProcEvalBuf()
 \		'rows':line('$'),
 \		'cols':len(substitute(getline(1), '[^\t]', '', 'g'))
 \	}
-	" echomsg "DEBUG: b:viewbuf_data = ".b:viewbuf_data
+	call DEBUG('_ProcEvalBuf', 'b:viewbuf_data', b:viewbuf_data)
 	
 	" Iterate over all cell positions ( See: _itercellpos() ).
 	for pos in _itercellpos(b:viewbuf_data['rows'], b:viewbuf_data['cols'])
@@ -117,23 +131,25 @@ function _GetCell(pos)
 	""" Returns String of whole cell including all characters and TAB (^I)
 	""" Example: cell = "#= 123.45	"
 	let line = getline(a:pos[0])
-	" echo "DEBUG: line = "..line
+	call DEBUG('_GetCell', 'line', line)
 
 	let row  = split(line, '\t\zs', 1)
-	" echo "DEBUG: row = "..join(row, ', ')
+	call DEBUG('_GetCell', 'row', row)
 
 	let cell = row[a:pos[1] - 1]
-	" echo "DEBUG: cell = "..cell
+	call DEBUG('_GetCell', 'cell', cell)
 	return cell
 endfunction
+
 
 function _ProcEvalCell(pos)
 	""" Gets, evaluates, and sets a cell at position `pos`.
 	""" Recursively evaluates if cell is equation with references (TBC).
-	" echo "DEBUG: pos = "..join(a:pos, ', ')
+	
+	call DEBUG('_ProcEvalCell', 'a:pos', a:pos)
 	
 	let cell = _GetCell(a:pos)
-	echo "DEBUG: cell = "..cell
+	call DEBUG('_ProcEvalCell', 'cell', cell)
 	
 	" CASE: Cell is empty.
 	if cell == "\t"
@@ -159,46 +175,60 @@ function _ProcEvalCell(pos)
 	"	data = _EvalFormula(formula)
 	
 	let datatype = _GetDatatype(meta)
-	" echo"DEBUG: datatype = "..datatype
+	call DEBUG('_ProcEvalCell', 'datatype', datatype)
+	
 	
 	let value = _EvalCellData(meta, data)
 	let valuestr = string(value)
 	let newcell = meta..' '..valuestr..'	'
 	
-	let set_cell_status = _SetCell(a:pos, cell, newcell)
+	let set_cell_status = _SetCell(a:pos, newcell)
 	return newcell
 endfunction
 
-function _SetCell(pos, oldcell, newcell) 
+
+function _SetCell(pos, newcell)
 	""" Sets cell with new content.
-	""" Unintentionlly but desireably sets all matching cells, which would
-	""" minimise total cell evaluations.
-	let oldcell = escape(a:oldcell, "/\*")
-	let newcell = escape(a:newcell, "/\*")
 	
-	execute "%s/"..oldcell.."/"..newcell.."/g"
+	call DEBUG('_SetCell', 'a:pos', a:pos)
+	call DEBUG('_SetCell', 'a:newcell', a:newcell)
+	
+	let l:before_line = getbufline(bufnr("%"), a:pos[0])[0]
+	call DEBUG('_SetCell', 'l:before_line', l:before_line)
+	
+	let l:row = split(before_line, '\t\zs', 1)
+	call DEBUG('_SetCell', 'l:row', l:row)
+	
+	let l:row[ a:pos[1] - 1 ] = a:newcell
+	call DEBUG('_SetCell', 'l:row', l:row)
+	
+	let l:after_line = join(row, '')
+	call DEBUG('_SetCell', 'l:after_line', l:after_line)
+	
+	call setbufline(bufnr("%"), a:pos[0], after_line)
+	
 	return "Cell Set"
 endfunction
 
 " --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
 
 function _EvalCellData(meta, data)
-	" call _SubstituteAliases(a:data)
+	""" Evaluates the data of a cell formula.
+	""" Will handle cell addresses.
+
+	" While Loop: whilst there are unevaluated addresses present:
+		" Section: Convert next (first in string) Relative Addresses to an Absolute Addresses.
+		" Section: Call _ProcEvalCell() on Absolute Address.
+		" Section: Replace that Address with value.
 	
 	let value = eval(a:data)
-
-	" tmp example code.
-	" if datatype == 'String'
-	" 	let value = '`S:'.data
-	" elseif datatype == 'Number'
-	" 	let value = '`N:'.data
-	" endif
-	" tmp end.
 	
 	return value
 endfunction
 
 " --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
+" --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
+" DEPRECIATED FUNCTIONS
 
 function! _InitView()
 	set bufhidden=hide
@@ -224,13 +254,14 @@ function! _InitView()
 	setlocal vartabstop=24,12,18,18,24
 endfunction
 
+
 function! _EvalView() 
 	let save_cursor = getcurpos()
 	let b:viewbuf_data = {
 \		'rows':line('$'),
 \		'cols':len(substitute(getline(1), '[^\t]', '', 'g'))
 \	}
-	" echomsg "DEBUG: b:viewbuf_data = ".b:viewbuf_data
+	" echo "DEBUG: b:viewbuf_data = ".b:viewbuf_data
 	
 	" Iterate over all cell positions ( See: _itercellpos() ).
 	for pos in _itercellpos(b:viewbuf_data['rows'], b:viewbuf_data['cols'])
@@ -242,69 +273,6 @@ function! _EvalView()
 endfunction
 
 " --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
-
-function _GetCell_depreciated(pos) 
-	""" Returns String of whole cell including all characters and TAB (^I)
-	""" Example: cell = "#= 123.45^I"
-	let line = getline(a:pos[0])
-	let row  = split(line, '\t\zs', 1)
-	let cell = row[a:pos[1] - 1]
-	return cell
-endfunction
-
-function _EvalCell(pos)
-	""" Gets, evaluates, and sets a cell at position `pos`.
-	""" Recursively evaluates if cell is equation with references (TBC).
-	echo "DEBUG: pos = "..join(a:pos, ', ')
-	
-	let cell = _GetCell(a:pos)
-	" echomsg "DEBUG: cell = ".cell
-	
-	echo "DEBUG: cell = "..cell
-	
-	" CASE: Cell is empty.
-	if cell == "\t"
-		return 0
-
-	" CASE: Cell is already evaluated.
-	elseif cell[0] == g:tabulae_evaluated_marker
-		return cell[1:]
-	
-	" CASE: Unplanned occurence of preceding whitespace?
-	elseif cell[0] == ' '
-		echoerr "Unexpected preceding whitespace."
-	endif
-	
-	let [meta, data] = _SplitCell(cell)
-
-	" let metadata = _ParseCellMeta(meta)
-	" if metadata['equation'] == l
-	"	formula = data
-	"	data = _EvalFormula(formula)
-	
-	let datatype = _GetDatatype(meta)
-	" echomsg "DEBUG: datatype = ".datatype
-	
-	" Creating evaluated string.
-	if datatype == 'String'
-		let eval = '`S:'.data.'	'
-	elseif datatype == 'Number'
-		let eval = '`N:'.data.'	'
-	endif
-	
-	let status = "Evaluated"
-	let setstatus = _SetCell(a:pos, cell, eval)
-	return status
-endfunction
-
-function _SetCell_depreciated(pos, cell, eval) 
-	""" Sets cell with new content.
-	""" Unintentionlly but desireably sets all matching cells, which would
-	""" minimise total cell evaluations.
-	execute "%s/".a:cell."/".a:eval."/g"
-	return "Cell Set"
-endfunction
-
 " --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
 
 function _SplitCell(cell)
@@ -317,12 +285,14 @@ function _SplitCell(cell)
 	return [metadata, data]
 endfunction
 
+
 function _EvalFormula(formula)
 	" let expformula = _ExpandFormula(a:formula)
 	" 
 	" eval = execute(expformula)
 	" return eval
 endfunction
+
 
 function _ParseCellMeta(meta)
 	let meta = {}
@@ -340,6 +310,7 @@ function _ParseCellMeta(meta)
 		endif 
 	endfor 
 endfunction
+
 
 function _GetDatatype(meta)
 	if     stridx(a:meta, "'") == 0
@@ -379,6 +350,14 @@ function _parse_taebuf_metadata(taebuf)
 	\}
 	return metadata
 endfunction
+
+" --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
+" TEMPORARY DEBUGGING TOOLS
+
+function DEBUG(func_name, var_name, var)
+	echo "DEBUG: "..a:func_name.."(): "..a:var_name.." = "..string(a:var)
+endfunction
+nnoremap U <C-r>
 
 " --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
 
