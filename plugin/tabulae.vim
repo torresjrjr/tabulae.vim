@@ -8,7 +8,7 @@
 if exists("g:loaded_tabulae") || &cp || v:version < 700
   finish
 endif
-let g:loaded_tabulae = 1 
+let g:loaded_tabulae = 1
 let s:save_cpo = &cpo
 set cpo&vim
 
@@ -39,7 +39,7 @@ function _InitBufs(taebuf="")
 	
 	" Extracting file's metadata and getting spreadsheet names.
 	let taebuf_metadata = _parse_taebuf_metadata(taebuf)
-	let sheets = taebuf_metadata.sheets 
+	let sheets = taebuf_metadata.sheets
 	" 'books dict', 'orders dict', 'customers dict'
 	
 	call DEBUG('_InitBufs', 'sheets', sheets)
@@ -68,7 +68,7 @@ function _InitBufs(taebuf="")
 	for viewbuf in viewbufs
 		execute "badd "..viewbuf
 		execute "$argadd "..viewbuf
-	endfor 
+	endfor
 	call DEBUG('_InitBufs', 'execute("args")', execute("args"))
 	
 	" Settings which apply to relevant buffers except .tae file:
@@ -76,7 +76,7 @@ function _InitBufs(taebuf="")
 	argdo setlocal bufhidden=hide
 	argdo setlocal noswapfile
 	" Paste taebuf into evalbuf & viewbufs (argument list).
-	argdo put! t 
+	argdo put! t
 	" Delete extra line and move cursor to first tab.
 	argdo normal Gddgg0f	
 	
@@ -87,6 +87,7 @@ function _InitBufs(taebuf="")
 	argdo setlocal nowrap
 	argdo setlocal list listchars=eol:¬,tab:>\ \|,nbsp:%
 	argdo setlocal cursorline cursorcolumn
+	argdo setlocal tabstop=24 softtabstop=0
 	argdo setlocal vartabstop=24 varsofttabstop=0
 endfunction
 
@@ -108,7 +109,7 @@ endfunction
 
 " --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
 
-function! _ProcEvalBuf() 
+function! _ProcEvalBuf()
 	let save_cursor = getcurpos()
 	let b:viewbuf_data = {
 \		'rows':line('$'),
@@ -127,17 +128,17 @@ endfunction
 
 " --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
 
-function _GetCell(pos) 
+function _GetCell(pos)
 	""" Returns String of whole cell including all characters and TAB (^I)
 	""" Example: cell = "#= 123.45	"
 	let line = getline(a:pos[0])
-	call DEBUG('_GetCell', 'line', line)
+	" call DEBUG('_GetCell', 'line', line)
 
 	let row  = split(line, '\t\zs', 1)
-	call DEBUG('_GetCell', 'row', row)
+	" call DEBUG('_GetCell', 'row', row)
 
 	let cell = row[a:pos[1] - 1]
-	call DEBUG('_GetCell', 'cell', cell)
+	" call DEBUG('_GetCell', 'cell', cell)
 	return cell
 endfunction
 
@@ -163,56 +164,61 @@ function _ProcEvalCell(pos)
 	let [meta, data] = _SplitCell(cell)
 	
 	" CASE: Cell is already evaluated.
-	if meta[len(meta)-1] != "="
-		return cell
+	let is_already_evaluated = meta[len(meta)-1] != "="
+	if is_already_evaluated
+		return [cell, meta, data]
 	endif
 	
-	let meta = substitute(meta, '=$', '', '')
+	let newmeta = substitute(meta, '=$', '', '')
 	
-	" let metadata = _ParseCellMeta(meta)
+	" let metadata = _ParseCellMeta(newmeta)
 	" if metadata['equation'] == l
 	"	formula = data
 	"	data = _EvalFormula(formula)
 	
-	let datatype = _GetDatatype(meta)
-	call DEBUG('_ProcEvalCell', 'datatype', datatype)
+	let datatype = _GetDatatype(newmeta)
+	" call DEBUG('_ProcEvalCell', 'datatype', datatype)
 	
 	
-	let value = _EvalCellData(meta, data)
+	let value = _EvalCellData(a:pos, newmeta, data)
+	" call DEBUG('_ProcEvalCell', 'value', value)
+	
 	let valuestr = string(value)
-	let newcell = meta..' '..valuestr..'	'
+	let newcell = newmeta..' '..valuestr..'	'
 	
 	let set_cell_status = _SetCell(a:pos, newcell)
-	return newcell
+	echo set_cell_status
+	
+	return [newcell, newmeta, value]
 endfunction
 
 
 function _SetCell(pos, newcell)
 	""" Sets cell with new content.
 	
-	call DEBUG('_SetCell', 'a:pos', a:pos)
-	call DEBUG('_SetCell', 'a:newcell', a:newcell)
+	" call DEBUG('_SetCell', 'a:pos', a:pos)
+	" call DEBUG('_SetCell', 'a:newcell', a:newcell)
 	
 	let l:before_line = getbufline(bufnr("%"), a:pos[0])[0]
-	call DEBUG('_SetCell', 'l:before_line', l:before_line)
+	" call DEBUG('_SetCell', 'l:before_line', l:before_line)
 	
 	let l:row = split(before_line, '\t\zs', 1)
-	call DEBUG('_SetCell', 'l:row', l:row)
+	" call DEBUG('_SetCell', 'l:row', l:row)
 	
 	let l:row[ a:pos[1] - 1 ] = a:newcell
-	call DEBUG('_SetCell', 'l:row', l:row)
+	" call DEBUG('_SetCell', 'l:row', l:row)
 	
 	let l:after_line = join(row, '')
-	call DEBUG('_SetCell', 'l:after_line', l:after_line)
+	" call DEBUG('_SetCell', 'l:after_line', l:after_line)
 	
 	call setbufline(bufnr("%"), a:pos[0], after_line)
 	
-	return "Cell Set"
+	return "Cell ["..a:newcell.."] Set."
 endfunction
 
 " --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
 
-function _EvalCellData(meta, data)
+function _EvalCellData(pos, meta, data)
 	""" Evaluates the data of a cell formula.
 	""" Will handle cell addresses.
 
@@ -221,7 +227,76 @@ function _EvalCellData(meta, data)
 		" Section: Call _ProcEvalCell() on Absolute Address.
 		" Section: Replace that Address with value.
 	
-	let value = eval(a:data)
+	let data = ' '..a:data..' ' " Padded so regex in matchstrpos() works later.
+	
+	let rel_addr_regex = '[^\\]\zs{\(+\|-\|\)\d\+,\(+\|-\|\)\d\+}' " Example: {3,-5}
+	let abs_range_regex = '[^\\]\zs[A-Z]\+[0-9]\+:[A-Z]\+[0-9]\+' " Example: A1:C3
+	let abs_addr_regex = '[^\\]\zs[A-Z]\+[0-9]\+' " Example: A1
+	
+	
+	" Process loop. Loops through matches in order of importance.
+	while v:true
+		call DEBUG('_EvalCellData', 'data', data)
+		""" First, evaluate relative addresses as they come.
+		let [rel_str, A, B] = matchstrpos(data, rel_addr_regex)
+		if A != -1
+			" Evaluate relative address here. Then `continue`.
+			echo "Processing Relative Address: "..rel_str
+			
+			continue
+		endif
+		
+		""" Second, evaluate absolute address ranges as they come.
+		let [abr_str, A, B] = matchstrpos(data, abs_range_regex)
+		if A != -1
+			" Evaluate absolute address range here. Then `continue`.
+			echo "Processing Absolute Address Range: "..abr_str
+			
+			continue
+		endif
+		
+		
+		""" Third, evaluate absulute addresses as they come.
+		"   Calls `_ProcEvalCell()`.
+		let [abs_str, A, B] = matchstrpos(data, abs_addr_regex)
+		if A != -1
+			" Evaluate absolute address here. Then `continue`.
+			" First, get pos variable.
+			echo "Processing Absolute Address: "..abs_str
+			let col_str = matchstr(abs_str, '[A-Z]\+')
+			let row_str = matchstr(abs_str, '[0-9]\+')
+			
+			let col_tmp = str2list(col_str)->reverse()
+			let col_tmp = map(col_tmp, { i, v -> pow(26, i)*(v-64) })
+			let col_num = join(col_tmp, '+')->eval()->float2nr()
+			
+			let row_num = str2nr(row_str)
+			
+			let ref_pos = [row_num, col_num]
+			" call DEBUG('_EvalCellData', 'ref_pos', ref_pos)
+			
+			" GET cell value at reference position.
+			let processed_eval_cell = _ProcEvalCell(ref_pos)
+			" call DEBUG('_EvalCellData', 'processed_eval_cell', processed_eval_cell)
+			
+			let [ref_cell, ref_meta, ref_val] = processed_eval_cell
+			" call DEBUG('_EvalCellData', 'ref_val', ref_val)
+			
+			let ref_val_str = string(ref_val)
+			
+			" CHANGE absolute address to referenced value
+			let data = substitute(data, abs_str, ref_val_str, '')
+			" call DEBUG('_EvalCellData', 'data', data)
+			
+			continue
+		endif
+		
+		break
+	endwhile
+	
+	
+	let value = eval(data)
+	call DEBUG('_EvalCellData', 'value', value)
 	
 	return value
 endfunction
@@ -248,14 +323,14 @@ function! _InitView()
 	set showbreak=`
 	set list listchars=eol:¬,tab:>\ \|,nbsp:%
 	set cursorline cursorcolumn
-	setlocal tabstop=24 softtabstop=0 
+	setlocal tabstop=24 softtabstop=0
 	
 	" HARDCODED
 	setlocal vartabstop=24,12,18,18,24
 endfunction
 
 
-function! _EvalView() 
+function! _EvalView()
 	let save_cursor = getcurpos()
 	let b:viewbuf_data = {
 \		'rows':line('$'),
@@ -288,7 +363,6 @@ endfunction
 
 function _EvalFormula(formula)
 	" let expformula = _ExpandFormula(a:formula)
-	" 
 	" eval = execute(expformula)
 	" return eval
 endfunction
@@ -307,8 +381,8 @@ function _ParseCellMeta(meta)
 			else
 				echoerr "Metadata datatype char unrecognised."
 			endif
-		endif 
-	endfor 
+		endif
+	endfor
 endfunction
 
 
