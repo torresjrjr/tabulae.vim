@@ -88,6 +88,26 @@ to also think about conforming to the format, and not messing the whole file up.
 Much is left for imagination. I hope to continue this to it's minimum viable
 end. Happy new year 🐦 🎉 !
 
+### 2020 January 03
+Flap! Cell references in cell data now work!
+
+For now, specifically only Absolute Addresses (A1, C23, etc) are parsed, and
+recursively evaluated. For example:
+
+```tae
+#= A1 + A2 + 5        The cell
+#= 10 + A2 + 5        1st address is evaluated
+#= 10 + 20 + 5        2nd address is evaluated
+#  25                 Cell is evaluated
+```
+
+In the future, Relative Ranges (`{0,-2}`, `{19,23}`, etc) will be parsed and
+converted to Absolute Addresses.
+
+In the future, Address Ranges (`A1:C1`, `B1:B100`, etc) will be parsable.
+
+Great progress.
+
 Contribute
 ----------
 If you like the idea and want to contribute to this project, contact me at
