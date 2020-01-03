@@ -91,7 +91,7 @@ end. Happy new year 🐦 🎉 !
 ### 2020 January 03
 Flap! Cell references in cell data now work!
 
-For now, specifically only Absolute Addresses (A1, C23, etc) are parsed, and
+For now, specifically only Absolute Addresses (`A1`, `C23`, etc) are parsed, and
 recursively evaluated. For example:
 
 ```tae
@@ -101,10 +101,12 @@ recursively evaluated. For example:
 #  25                 Cell is evaluated
 ```
 
-In the future, Relative Ranges (`{0,-2}`, `{19,23}`, etc) will be parsed and
-converted to Absolute Addresses.
+In the future, Relative Addresses (`{0,-2}`, `{19,23}`, etc) will be parsed and
+converted to Absolute Addresses. For example: `{0,-2} => B3`.
 
-In the future, Address Ranges (`A1:C1`, `B1:B100`, etc) will be parsable.
+In the future, Address Ranges (`A1:C1`, `B1:B100`, etc) will be parsed and
+converted to a string of comma-separated Absolute Addresses. For example:
+`A1:C1 => A1,B1,C1`.
 
 Great progress.
 
