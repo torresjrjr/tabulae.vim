@@ -58,6 +58,37 @@ to have rows and coloums of varying widths and heights. I think that a
 combination of _hidden_ \<TAB\> characters (by way of Vim highlighting) and
 spaces (0x20) would be effective.
 
+Buffer structure
+----------------
+Here's an ASCII illustration of the buffer structure of an active session of
+`tabulae` with a workbook.
+
+```
+                                                            
+    .tae file            eval-buf              view-buf     
+  +------------+      +------------+        +------------+  
+  |%sheet 1    |      |%sheet 1    |        |Col   Col   |  
+  |' Col ' Col | ---> |' Col ' Col | --+--> |1     1     |  
+  |# 1   #= A2 |      |# 1   # 1   |   |    |2     2     |  
+  |# 2   #= A3 |      |# 2   # 2   |   |    |3     3     |  
+  |# 3   #= A4 |      |# 3   # 3   |   |    +------------+  
+  |%sheet 2    |      |%sheet 2    |   |                    
+  |' id  ' fn  |      |' id  ' fn  |   |       view-buf     
+  |# 23  ' Ada |      |# 23  ' Ada |   |    +------------+  
+  |# 86  ' Ben |      |# 86  ' Ben |   |    |id    fn    |  
+  |# 9   ' Cin |      |# 9   ' Cin |   +--> |23    Ada   |  
+  +------------+      +------------+   |    |86    Ben   |  
+                                       |    |9     Cin   |  
+                                       |    +------------+  
+                                      etc.                  
+                                       :                    
+                                                            
+```
+
+This will be the general structure of viewing a `.tae` file. Edits are made
+(directly or indirectly) to the tabulae file, and the view is updated
+accordingly.
+
 The `.tae` file format
 ----------------------
 `.tae` files are similar to `.tsv` files. `.tae` files consist of rows delimited
