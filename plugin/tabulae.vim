@@ -1,7 +1,7 @@
 " tabulae.vim
 " A Vim spreadsheet calculator plugin.
 " Version:      0.1.0
-" Last Changed: 2019 Dec 18
+" Last Changed: 2020 January 20
 " Author:       Byron Torres <http://t.me/torresjrjr/>
 " License:      This file is placed in the public domain.
 
@@ -17,7 +17,6 @@ set cpo&vim
 " This version is a very early draft. This will change soon.
 
 " OPTIONS
-setlocal tabstop=24 softtabstop=0
 
 " VARIABLES
 
@@ -28,11 +27,7 @@ function _InitBufs(taebuf="")
 	
 	" Creating buffer names.
 	" Creating `.tae` file buffer name.
-	if a:taebuf == ""
-		let taebuf = bufname("%") " workbook.tae
-	else
-		let taebuf = a:taebuf
-	endif
+	let taebuf = a:taebuf == "" ? bufname("%") : a:taebuf
 	
 	" Creating eval-buffer name.
 	let evalbuf = taebuf.".__eval__" " workbook.tae.__eval__
@@ -138,17 +133,27 @@ endfunction
 function _GetCell(bufname, pos)
 	""" Returns String of whole cell including all characters and TAB (^I)
 	""" Example: cell = "#= 123.45	"
+	
 	let line = getbufline(a:bufname, a:pos[0])[0]
-	" call DEBUG('_GetCell', 'line', line)
-	
 	let row  = split(line, '\t\zs', 1)
-	" call DEBUG('_GetCell', 'row', row)
-	
 	let cell = row[a:pos[1] - 1]
-	" call DEBUG('_GetCell', 'cell', cell)
 	return cell
 endfunction
 
+
+function _SetCell(bufname, pos, newcell)
+	""" Sets cell with new content.
+	
+	let l:before_line = getbufline(bufnr(a:bufname), a:pos[0])[0]
+	let l:row = split(before_line, '\t\zs', 1)
+	let l:row[ a:pos[1] - 1 ] = a:newcell
+	let l:after_line = join(row, '')
+	call setbufline(bufnr(a:bufname), a:pos[0], after_line)
+	
+	return "Cell ["..a:newcell.."] Set."
+endfunction
+
+" --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
 
 function _ProcEvalCell(bufname, pos)
 	""" Gets, evaluates, and sets a cell at position `pos`.
@@ -200,40 +205,11 @@ function _ProcEvalCell(bufname, pos)
 	return [newcell, newmeta, value]
 endfunction
 
-
-function _SetCell(bufname, pos, newcell)
-	""" Sets cell with new content.
-	
-	" call DEBUG('_SetCell', 'a:pos', a:pos)
-	" call DEBUG('_SetCell', 'a:newcell', a:newcell)
-	
-	let l:before_line = getbufline(bufnr(a:bufname), a:pos[0])[0]
-	" call DEBUG('_SetCell', 'l:before_line', l:before_line)
-	
-	let l:row = split(before_line, '\t\zs', 1)
-	" call DEBUG('_SetCell', 'l:row', l:row)
-	
-	let l:row[ a:pos[1] - 1 ] = a:newcell
-	" call DEBUG('_SetCell', 'l:row', l:row)
-	
-	let l:after_line = join(row, '')
-	" call DEBUG('_SetCell', 'l:after_line', l:after_line)
-	
-	call setbufline(bufnr(a:bufname), a:pos[0], after_line)
-	
-	return "Cell ["..a:newcell.."] Set."
-endfunction
-
 " --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
 
 function _EvalCellData(bufname, pos, meta, data)
 	""" Evaluates the data of a cell formula.
 	""" Will handle cell addresses.
-
-	" While Loop: whilst there are unevaluated addresses present:
-		" Section: Convert next (first in string) Relative Addresses to an Absolute Addresses.
-		" Section: Call _ProcEvalCell() on Absolute Address.
-		" Section: Replace that Address with value.
 	
 	let data = ' '..a:data..' ' " Padded so regex in matchstrpos() works later.
 	
@@ -274,16 +250,7 @@ function _EvalCellData(bufname, pos, meta, data)
 			" Evaluate absolute address here. Then `continue`.
 			" First, get pos variable.
 			echo "Processing Absolute Address: "..abs_str
-			let col_str = matchstr(abs_str, '[A-Z]\+')
-			let row_str = matchstr(abs_str, '[0-9]\+')
-			
-			let col_tmp = str2list(col_str)->reverse()
-			let col_tmp = map(col_tmp, { i, v -> pow(26, i)*(v-64) })
-			let col_num = join(col_tmp, '+')->eval()->float2nr()
-			
-			let row_num = str2nr(row_str)
-			
-			let ref_pos = [row_num, col_num]
+			let ref_pos = _abs_addr_to_ref_pos(addr_str)
 			" call DEBUG('_EvalCellData', 'ref_pos', ref_pos)
 			
 			" GET cell value at reference position.
@@ -310,6 +277,21 @@ function _EvalCellData(bufname, pos, meta, data)
 	call DEBUG('_EvalCellData', 'value', value)
 	
 	return value
+endfunction
+
+
+function _abs_addr_to_ref_pos(addr_str)
+	let col_str = matchstr(a:abs_str, '[A-Z]\+')
+	let row_str = matchstr(a:abs_str, '[0-9]\+')
+	
+	let col_tmp = str2list(col_str)->reverse()
+	let col_tmp = map(col_tmp, { i, v -> pow(26, i)*(v-64) })
+	let col_num = join(col_tmp, '+')->eval()->float2nr()
+	
+	let row_num = str2nr(row_str)
+	
+	let ref_pos = [row_num, col_num]
+	return ref_pos
 endfunction
 
 " --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
@@ -406,13 +388,6 @@ function _SplitCell(cell)
 	let data = substitute(data, '\\|', '', 'g')
 	
 	return [metadata, data]
-endfunction
-
-
-function _EvalFormula(formula)
-	" let expformula = _ExpandFormula(a:formula)
-	" eval = execute(expformula)
-	" return eval
 endfunction
 
 
