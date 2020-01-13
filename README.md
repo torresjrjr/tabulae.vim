@@ -117,6 +117,8 @@ If you like the idea and want to contribute to this project, contact me at
 
 Author's notes
 -------------
+This project aspires to follow the [Semantic Versioning](https://semver.org/) scheme.
+
 I was inspired to make this plugin, because I was intrigued by _sc-im_, a
 spreadsheet calculator with vim-like controls. However, I couldn't install and
 try it out since I run _MSYS2_ on Windows, so I though I would make one myself.
